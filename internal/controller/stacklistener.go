@@ -50,7 +50,9 @@ func (s *StackListener) onUpdate(_, newObj interface{}) {
 }
 
 func (s *StackListener) onDelete(obj interface{}) {
+	log.Debug("StackListener.onDelete")
 	if tombstone, ok := obj.(cache.DeletedFinalStateUnknown); ok {
+		log.Debug("StackListener.onDelete DeletedFinalStateUnknown")
 		obj = tombstone.Obj
 	}
 	stack, ok := obj.(*latest.Stack)

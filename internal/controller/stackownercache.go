@@ -67,8 +67,11 @@ func NewStackOwnerCache(config *rest.Config) (StackOwnerCacher, error) {
 }
 
 func (s *stackOwnerCache) remove(key string) {
+	log.Debug("stackOwnerCache.remove", key)
 	s.mut.Lock()
+	log.Debug("stackOwnerCache.remove Lock aquired")
 	defer s.mut.Unlock()
+	log.Debugf("stackOwnerCache.remove before s.data %#v", s.data)
 	delete(s.data, key)
 }
 

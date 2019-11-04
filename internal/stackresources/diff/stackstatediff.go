@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/docker/compose-on-kubernetes/internal/stackresources"
-	log "github.com/sirupsen/logrus"
 	appstypes "k8s.io/api/apps/v1"
 	coretypes "k8s.io/api/core/v1"
 )
@@ -203,6 +202,6 @@ func ComputeDiff(current, desired *stackresources.StackState) *StackStateDiff {
 	computeDaemonsetsDiff(current, desired, result)
 	computeServicesDiff(current, desired, result)
 
-	log.Debugf("produced stack state diff %#v", result)
+	//log.Debugf("produced stack state diff %#v", result)
 	return result
 }

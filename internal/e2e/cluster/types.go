@@ -417,9 +417,27 @@ func (ns *Namespace) ContainsZeroStack() wait.ConditionFunc {
 // ContainsNStacks is a poller that checks how many stacks are created.
 func (ns *Namespace) ContainsNStacks(count int) wait.ConditionFunc {
 	return func() (bool, error) {
+		fmt.Println("Waiting: listing stacks!!!!")
 		stacks, err := ns.ListStacks()
 		if err != nil {
 			return false, err
+		}
+		for _, s := range stacks {
+			fmt.Printf("STACK %#v\n", s)
+		}
+		pods, err := ns.ListAllPods()
+		if err != nil {
+			return false, err
+		}
+		for _, p := range pods {
+			fmt.Println("POD", p.Name, p.ObjectMeta.DeletionTimestamp, p.ObjectMeta.Finalizers)
+		}
+		deps, err := ns.ListDeployments("")
+		if err != nil {
+			return false, err
+		}
+		for _, d := range deps {
+			fmt.Println("DEPLOYMENT", d.Name, d.ObjectMeta.DeletionTimestamp, d.ObjectMeta.Finalizers)
 		}
 
 		if len(stacks) != count {

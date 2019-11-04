@@ -3,7 +3,7 @@ include common.mk
 export BUILD_BASE_IMAGE = golang:1.13.0-alpine3.10
 export TEST_BASE_IMAGE = golang:1.13.0
 export RUN_BASE_IMAGE = alpine:3.10.2
-export KUBERNETES_VERSION ?= 1.16.1
+export KUBERNETES_VERSION ?= 1.16.2
 KIND_VERSION ?= 0.5.1
 IMAGES = ${IMAGE_REPO_PREFIX}controller ${IMAGE_REPO_PREFIX}controller-coverage ${IMAGE_REPO_PREFIX}e2e-tests ${IMAGE_REPO_PREFIX}e2e-benchmark ${IMAGE_REPO_PREFIX}api-server ${IMAGE_REPO_PREFIX}api-server-coverage ${IMAGE_REPO_PREFIX}installer
 PUSH_IMAGES = push/${IMAGE_REPO_PREFIX}controller push/${IMAGE_REPO_PREFIX}api-server push/${IMAGE_REPO_PREFIX}installer
@@ -11,6 +11,7 @@ DOCKERFILE = Dockerfile
 ifneq ($(DOCKER_BUILDKIT),)
   override DOCKERFILE := Dockerfile.buildkit
 endif
+IMAGE_ARCHIVE ?= pre-loaded-images/coverage-enabled-images.tar
 
 BUILD_ARGS = \
   --build-arg BUILD_BASE=${BUILD_BASE_IMAGE} \
@@ -83,6 +84,8 @@ ${IMAGE_REPO_PREFIX}installer:
 images: $(IMAGES) ## build images
 	@echo $(IMAGES)
 
+images-coverage: ${IMAGE_REPO_PREFIX}api-server-coverage ${IMAGE_REPO_PREFIX}controller-coverage
+
 save-coverage-images:
 	@echo "🌟 save ${IMAGE_REPO_PREFIX}api-server-coverage:$(TAG) ${IMAGE_REPO_PREFIX}controller-coverage:$(TAG)"
 	@mkdir -p pre-loaded-images
@@ -94,7 +97,7 @@ ifeq (,$(wildcard ./~/bin/kind))
 	chmod +x ~/bin/kind
 endif
 
-create-kind-cluster: install-kind
+create-kind-cluster:
 	@echo "🌟 Create kind cluster"
 	@kind create cluster --name compose-on-kube --image kindest/node:v$(KUBERNETES_VERSION)
 

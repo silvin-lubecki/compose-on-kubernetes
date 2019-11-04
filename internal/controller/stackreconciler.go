@@ -77,7 +77,9 @@ func (r *StackReconciler) Start(reconcileQueue <-chan string, deletionQueue <-ch
 			case key := <-r.reconcileRetryQueue.Out():
 				r.reconcileStack(key)
 			case stack := <-deletionQueue:
+				log.Debug("StackReconciler::Start: Deletion received ", stack.Name)
 				r.deleteStackChildren(stack)
+				log.Debug("deleteStackChildren done")
 			}
 		}
 	}()
@@ -91,7 +93,9 @@ func (r *StackReconciler) reconcileStack(key string) {
 	}
 	if stack.DeletionTimestamp != nil {
 		// pending deletion
+		log.Debug("StackReconciler::reconcileStack stack.DeletionTimestamp != nil", key)
 		r.deleteStackChildren(stack)
+		log.Debug("StackReconciler::reconcileStack done")
 		return
 	}
 	updater, err := r.resourceUpdater.getUpdater(stack, convert.IsStackDirty(stack))
@@ -106,30 +110,37 @@ func (r *StackReconciler) reconcileStack(key string) {
 }
 
 func (r *StackReconciler) deleteStackChildren(stack *latest.Stack) {
+	log.Debug("StackReconciler.deleteStackChildren BEGIN")
 	current, err := r.children.getCurrentStackState(stackresources.ObjKey(stack.Namespace, stack.Name))
 	if err != nil {
 		log.Errorf("Failed to resolve current state for %s/%s: %s", stack.Namespace, stack.Name, err)
 		return
 	}
+	log.Debug("r.children.getCurrentStackState done")
 	updater, err := r.resourceUpdater.getUpdater(stack, false)
 	if err != nil {
 		log.Errorf("Updater resolution failed: %s", err)
 		return
 	}
+	log.Debug("r.resourceUpdater.getUpdater done")
+
 	diff := diff.ComputeDiff(current, stackresources.EmptyStackState)
 	if err := updater.applyStackDiff(diff); err != nil {
 		log.Errorf("Failed to remove stack children for %s/%s: %s", stack.Namespace, stack.Name, err)
 		return
 	}
+	log.Debugf("diff.ComputeDiff(current, stackresources.EmptyStackState) done")
 
 	// handle secrets and config maps
 	if err := updater.deleteSecretsAndConfigMaps(); err != nil {
 		log.Errorf("Failed to remove stack secrets and config maps for %s/%s: %s", stack.Namespace, stack.Name, err)
 		return
 	}
+	log.Debug("updater.deleteSecretsAndConfigMaps() done")
 
 	// remove from impersonation cache
 	r.ownerCache.remove(stackresources.ObjKey(stack.Namespace, stack.Name))
+	log.Debug("r.ownerCache.remove(stackresources.ObjKey(stack.Namespace, stack.Name))")
 }
 
 func (r *StackReconciler) reconcileChildren(stack *latest.Stack, resourceUpdater resourceUpdater) error {
